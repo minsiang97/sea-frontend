@@ -4,28 +4,23 @@
  *
  * @format
  */
-
+import Main from './src/navigation/Main';
 import React from 'react';
-import { SafeAreaView, StatusBar, useColorScheme } from 'react-native';
-
-import { Colors } from 'react-native/Libraries/NewAppScreen';
+import { Platform, SafeAreaView, StatusBar } from 'react-native';
 import { Provider } from 'react-redux';
 import store from 'redux/store';
+import Color from 'themes/Color';
+import { globalStyles } from 'themes/Styles';
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  const statusBarStyle =
+    Platform.OS === 'android' ? 'light-content' : 'default';
 
   return (
     <Provider store={store}>
-      <SafeAreaView style={backgroundStyle}>
-        <StatusBar
-          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-          backgroundColor={backgroundStyle.backgroundColor}
-        />
+      <SafeAreaView style={globalStyles.safeAreaView}>
+        <StatusBar barStyle={statusBarStyle} backgroundColor={Color.mainGrey} />
+        <Main />
       </SafeAreaView>
     </Provider>
   );

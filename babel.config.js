@@ -18,6 +18,11 @@ module.exports = {
         root: ['./src'],
         alias: {
           '@redux': './src/redux',
+          '@navigation': './src/navigation',
+          '@screens': './src/screens',
+          '@themes': './src/themes',
+          '@components': './src/components',
+          '@config': './src/config',
         },
       },
     ],

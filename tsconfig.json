@@ -4,7 +4,12 @@
     "baseUrl": ".",
     "paths": {
       "*": ["src/*"],
-      "@redux/*": ["src/redux/*"]
+      "@redux/*": ["src/redux/*"],
+      "@navigation/*": ["src/navigation/*"],
+      "@screens/*": ["src/screens/*"],
+      "@themes/*": ["src/themes/*"],
+      "@components/*": ["src/components/*"],
+      "@config/*": ["src/config/*"]
     }
   }
 }
