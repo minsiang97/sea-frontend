@@ -85,7 +85,7 @@ const Login: React.FC<LoginProps> = ({ navigation }) => {
         },
       );
 
-      if (response.data) {
+      if (response.data && response.data.data) {
         const { data }: { data: RefreshUserData } = response.data;
         dispatch(login());
         dispatch(setUserState(data));
