@@ -15,9 +15,9 @@ export default Card;
 
 const styles = StyleSheet.create({
   defaultStyle: {
-    borderColor: Color.dividerGrey,
+    borderColor: Color.turquoise,
     borderWidth: 1,
-    backgroundColor: Color.white,
+    backgroundColor: Color.turquoise,
     paddingHorizontal: 10,
     paddingVertical: 15,
     borderRadius: 6,

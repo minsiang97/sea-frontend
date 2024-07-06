@@ -1,8 +1,19 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from 'axios';
 import { checkIsStringify } from './helper';
 import { ServerConfig } from 'config/serverConfig';
+import { getToken } from 'config/storage';
+import store from 'redux/store';
+import { setOpenErrorModal } from 'redux/features/auth/authSlice';
 
 const BASE_URL = ServerConfig.BASE_URL;
+
+interface ErrorResponse {
+  message: string;
+}
 
 const Axios = axios.create({
   timeout: 10000,
@@ -12,19 +23,13 @@ const Axios = axios.create({
   },
 });
 
-Axios.interceptors.request.use(async config => {
+Axios.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   config.baseURL = BASE_URL;
-  //   const { headers } = config;
-  //   if (token) {
-  //     config.headers = {
-  //       Authorization: token,
-  //       ...headers,
-  //     };
-  //   }
+  const token = await getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
-  //   if (url) {
-  //     config.baseURL = url;
-  //   }
   return config;
 });
 
@@ -45,19 +50,50 @@ Axios.interceptors.response.use(
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
     const statusCode: number = error.response?.status ?? 400;
-    if (
-      statusCode === 401 ||
-      statusCode >= 500 ||
-      error.code === 'ECONNABORTED'
-    ) {
-      // setOpenAuthModal(true);
-      return;
-    }
-    let err;
+
+    let err: ErrorResponse;
     if (error.response) {
-      err = error.response.data;
+      err = error.response.data as ErrorResponse;
     } else {
       err = { message: 'Something went wrong, please try again later' };
+    }
+    if (statusCode === 401) {
+      const params = {
+        errorModal: true,
+        errorTitle: 'Your session has expired',
+        errorMessage: 'Please login again',
+        buttonText: 'Login',
+        errorCode: statusCode,
+      };
+      store.dispatch(setOpenErrorModal(params));
+      return;
+    }
+
+    if (
+      statusCode >= 500 ||
+      err.message === 'Something went wrong, please try again later'
+    ) {
+      const params = {
+        errorModal: true,
+        errorTitle: 'Something went wrong',
+        errorMessage: 'Please try again later',
+        buttonText: 'OK',
+        errorCode: statusCode,
+      };
+      store.dispatch(setOpenErrorModal(params));
+      return;
+    }
+
+    if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK') {
+      const params = {
+        errorModal: true,
+        errorTitle: 'Network Error',
+        errorMessage: 'Please check your internet connection',
+        buttonText: 'OK',
+        errorCode: error.code,
+      };
+      store.dispatch(setOpenErrorModal(params));
+      return;
     }
 
     return Promise.reject(err);

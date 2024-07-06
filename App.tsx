@@ -7,6 +7,7 @@
 import Main from './src/navigation/Main';
 import React from 'react';
 import { Platform, SafeAreaView, StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import store from 'redux/store';
 import Color from 'themes/Color';
@@ -18,10 +19,15 @@ function App(): React.JSX.Element {
 
   return (
     <Provider store={store}>
-      <SafeAreaView style={globalStyles.safeAreaView}>
-        <StatusBar barStyle={statusBarStyle} backgroundColor={Color.mainGrey} />
-        <Main />
-      </SafeAreaView>
+      <SafeAreaProvider>
+        <SafeAreaView style={globalStyles.safeAreaView}>
+          <StatusBar
+            barStyle={statusBarStyle}
+            backgroundColor={Color.mainGrey}
+          />
+          <Main />
+        </SafeAreaView>
+      </SafeAreaProvider>
     </Provider>
   );
 }

@@ -17,7 +17,7 @@ const Button: React.FC<ButtonProps> = props => {
       ? Color.white
       : buttonType === 'disabled'
       ? Color.disabledText
-      : Color.black;
+      : Color.white;
   return (
     <TouchableOpacity
       style={[

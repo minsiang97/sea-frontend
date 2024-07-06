@@ -10,11 +10,23 @@ import TextInput from 'components/TextInput';
 import Button from 'components/Button';
 import Axios from 'config/serviceProvider/axios';
 import { API } from 'config/API';
-import { useAppDispatch } from 'redux/hooks';
-import { login, setLoading } from 'redux/features/auth/authSlice';
+import { useAppDispatch, useAppSelector } from 'redux/hooks';
+import {
+  login,
+  setBiometricEnabled,
+  setLoading,
+  setOpenErrorModal,
+} from 'redux/features/auth/authSlice';
 import { setUserState } from 'redux/features/user/userSlice';
 import { Routes } from 'config/routes';
-import { getCredentialsWithBiometric } from 'biometric';
+import {
+  getCredentialsWithBiometric,
+  saveCredentialsWithBiometric,
+} from 'config/biometric';
+import { UserCredentials } from 'react-native-keychain';
+import { RefreshUserData, UserData } from 'screens/login/types';
+import { setToken } from 'config/storage';
+import { delay } from 'utils';
 
 const Login: React.FC<LoginProps> = ({ navigation }) => {
   const [email, setEmail] = useState<string>('');
@@ -22,38 +34,122 @@ const Login: React.FC<LoginProps> = ({ navigation }) => {
   const [errorText, setErrorText] = useState<string | null>(null);
 
   const dispatch = useAppDispatch();
+  const auth = useAppSelector(state => state.auth);
 
   useEffect(() => {
     checkExistingKeyChainCredentials();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkExistingKeyChainCredentials = async () => {
-    const credentials = await getCredentialsWithBiometric();
+    try {
+      const credentials: UserCredentials | false | undefined =
+        await getCredentialsWithBiometric();
+
+      if (
+        auth.supportedBiometricType &&
+        credentials &&
+        credentials.username &&
+        credentials.password
+      ) {
+        dispatch(setBiometricEnabled(true));
+        handleRefreshToken(credentials.password);
+      } else {
+        dispatch(setBiometricEnabled(false));
+      }
+    } catch (error: any) {
+      // Set to true since is biometric authentication error, user able to retry for their next login
+      dispatch(setBiometricEnabled(true));
+      if (error.message === 'Something went wrong, please try again later') {
+        const params = {
+          errorModal: true,
+          errorTitle: 'Something went wrong',
+          errorMessage: 'Please try again later',
+          buttonText: 'OK',
+        };
+        dispatch(setOpenErrorModal(params));
+      }
+    }
+  };
+
+  const handleRefreshToken = async (refreshToken: string) => {
+    try {
+      dispatch(setLoading(true));
+      const response = await Axios.post(
+        API.REFRESH,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${refreshToken}`,
+          },
+        },
+      );
+
+      if (response.data) {
+        const { data }: { data: RefreshUserData } = response.data;
+        dispatch(login());
+        dispatch(setUserState(data));
+        await setToken(data.token);
+        await delay(2000);
+        dispatch(setLoading(false));
+        navigation.navigate(Routes.TRANSACTION_HISTORY);
+      }
+    } catch (error: any) {
+      dispatch(setLoading(false));
+      if (error.message === 'Something went wrong, please try again later') {
+        const params = {
+          errorModal: true,
+          errorTitle: 'Something went wrong',
+          errorMessage: 'Please try again later',
+          buttonText: 'OK',
+        };
+        dispatch(setOpenErrorModal(params));
+      }
+    }
   };
 
   const handleBack = () => {
     navigation.goBack();
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (userEmail: string, userPassword: string) => {
     try {
       dispatch(setLoading(true));
       const response = await Axios.post(API.LOGIN, {
-        email,
-        password,
+        email: userEmail,
+        password: userPassword,
       });
 
-      const { data } = response.data;
-      if (data) {
+      if (response.data && response.data.data) {
+        const { data }: { data: UserData } = response.data;
         dispatch(login());
         dispatch(setUserState(data));
         dispatch(setLoading(false));
+        await setToken(data.token);
+        if (auth.supportedBiometricType) {
+          await saveCredentialsWithBiometric(userEmail, data.refreshToken);
+          if (!auth.biometricEnabled) {
+            navigation.navigate(Routes.BIOMETRIC_ENABLE);
+          } else {
+            navigation.navigate(Routes.TRANSACTION_HISTORY);
+          }
+        } else {
+          navigation.navigate(Routes.TRANSACTION_HISTORY);
+        }
       }
-
-      navigation.navigate(Routes.TRANSACTION_HISTORY);
     } catch (error: any) {
       dispatch(setLoading(false));
-      setErrorText(error.message);
+      if (error.message === 'Something went wrong, please try again later') {
+        const params = {
+          errorModal: true,
+          errorTitle: 'Something went wrong',
+          errorMessage: 'Please try again later',
+          buttonText: 'OK',
+        };
+        dispatch(setOpenErrorModal(params));
+      } else {
+        setErrorText(error.message);
+      }
     }
   };
 
@@ -97,7 +193,11 @@ const Login: React.FC<LoginProps> = ({ navigation }) => {
             </View>
           </View>
         </View>
-        <Button buttonType="primary" buttonText="LOGIN" onPress={handleLogin} />
+        <Button
+          buttonType="primary"
+          buttonText="LOGIN"
+          onPress={() => handleLogin(email, password)}
+        />
       </View>
     </SafeAreaView>
   );

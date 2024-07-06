@@ -9,7 +9,8 @@
       "@screens/*": ["src/screens/*"],
       "@themes/*": ["src/themes/*"],
       "@components/*": ["src/components/*"],
-      "@config/*": ["src/config/*"]
+      "@config/*": ["src/config/*"],
+      "@utils/*": ["src/utils/*"]
     }
   }
 }
