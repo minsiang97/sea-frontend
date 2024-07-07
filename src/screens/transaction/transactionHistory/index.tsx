@@ -64,6 +64,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   useEffect(() => {
     setIsLoading(true);
     setTimeout(() => {
+      // Apply timeout in order to trigger biometrics since biometric authentication is cached for few seconds
       getTransactionHistory();
     }, 2000);
 

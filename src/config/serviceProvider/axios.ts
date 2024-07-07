@@ -51,6 +51,18 @@ Axios.interceptors.response.use(
     // Do something with response error
     const statusCode: number = error.response?.status ?? 400;
 
+    if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK') {
+      const params = {
+        errorModal: true,
+        errorTitle: 'Network Error',
+        errorMessage: 'Please check your internet connection',
+        buttonText: 'OK',
+        errorCode: error.code,
+      };
+      store.dispatch(setOpenErrorModal(params));
+      return;
+    }
+
     let err: ErrorResponse;
     if (error.response) {
       err = error.response.data as ErrorResponse;
@@ -79,18 +91,6 @@ Axios.interceptors.response.use(
         errorMessage: 'Please try again later',
         buttonText: 'OK',
         errorCode: statusCode,
-      };
-      store.dispatch(setOpenErrorModal(params));
-      return;
-    }
-
-    if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK') {
-      const params = {
-        errorModal: true,
-        errorTitle: 'Network Error',
-        errorMessage: 'Please check your internet connection',
-        buttonText: 'OK',
-        errorCode: error.code,
       };
       store.dispatch(setOpenErrorModal(params));
       return;

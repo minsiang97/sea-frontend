@@ -26,6 +26,7 @@ const BiometricEnable: React.FC<BiometricEnableProps> = ({ navigation }) => {
       if (credentials) {
         dispatch(setBiometricEnabled(true));
         dispatch(setLoading(true));
+        // Apply timeout in order to trigger biometrics in later screen since biometric will cache authentication for few seconds
         await delay(2000);
         dispatch(setLoading(false));
         navigation.navigate(Routes.TRANSACTION_HISTORY);

@@ -90,6 +90,7 @@ const Login: React.FC<LoginProps> = ({ navigation }) => {
         dispatch(login());
         dispatch(setUserState(data));
         await setToken(data.token);
+        // Apply timeout in order to trigger biometrics in later screen since biometric will cache authentication for few seconds
         await delay(2000);
         dispatch(setLoading(false));
         navigation.navigate(Routes.TRANSACTION_HISTORY);

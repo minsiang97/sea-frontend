@@ -5,5 +5,5 @@ interface ConfigVariables {
 }
 
 export const ServerConfig: ConfigVariables = {
-  BASE_URL: Config.BASE_URL ?? '',
+  BASE_URL: Config.BASE_URL ?? 'https://sea-backend-8j8g.onrender.com',
 };
